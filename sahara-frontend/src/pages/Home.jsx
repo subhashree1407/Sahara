@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import docImage from '../assets/doc.jpg';
+import cardio from '../assets/cardio.jpg';
+import ortho from '../assets/ortho.jpg';
+import pedia from '../assets/pedia.jpg';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -134,13 +137,21 @@ const Home = () => {
         },
     ];
 
+    // const specialties = [
+    //     { name: 'Cardiology', img: 'https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=600&q=80' },
+    //     { name: 'Neurology', img: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=600&q=80' },
+    //     { name: 'Orthopedics', img: 'https://images.unsplash.com/photo-1579684453423-f84349ef60b0?auto=format&fit=crop&w=600&q=80' },
+    //     { name: 'Pediatrics', img: 'https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?auto=format&fit=crop&w=600&q=80' },
+    //     { name: 'Dermatology', img: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=600&q=80' },
+    //     { name: 'Ophthalmology', img: 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?auto=format&fit=crop&w=600&q=80' },
+    // ];
     const specialties = [
-        { name: 'Cardiology', img: 'https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=600&q=80' },
+        { name: 'Cardiology', img: cardio },
         { name: 'Neurology', img: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=600&q=80' },
-        { name: 'Orthopedics', img: 'https://images.unsplash.com/photo-1579684453423-f84349ef60b0?auto=format&fit=crop&w=600&q=80' },
-        { name: 'Pediatrics', img: 'https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?auto=format&fit=crop&w=600&q=80' },
-        { name: 'Dermatology', img: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=600&q=80' },
-        { name: 'Ophthalmology', img: 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?auto=format&fit=crop&w=600&q=80' },
+        { name: 'Orthopedics', img: ortho },
+        { name: 'Pediatrics', img: pedia },
+        { name: 'Dermatology', img: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80' },
+        { name: 'Ophthalmology', img: 'https://images.unsplash.com/photo-1494869042583-f6c911f04b4c?auto=format&fit=crop&w=600&q=80' },
     ];
 
     const tips = [

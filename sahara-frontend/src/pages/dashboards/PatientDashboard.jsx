@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -10,6 +10,7 @@ const PatientDashboard = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
+    const dateInputRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState('reports');
     const [reports, setReports] = useState([]);
@@ -20,11 +21,27 @@ const PatientDashboard = () => {
     const [apptForm, setApptForm] = useState({ doctorId: '', date: '', timeSlot: '', reason: '' });
     const [expandedPresc, setExpandedPresc] = useState(null);
     const [scrolled, setScrolled] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const datePickerRef = useRef(null);
+
+    const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', onScroll);
         return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+                setShowDatePicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const fetchReports = async () => {
@@ -123,10 +140,9 @@ const PatientDashboard = () => {
 
     const timeSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM'];
 
-    // Regular nav tabs (left side of nav)
     const navTabs = [
         {
-            key: 'reports', label: 'My Reports', icon: (
+            key: 'reports', label: 'Reports', icon: (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                 </svg>
@@ -148,7 +164,6 @@ const PatientDashboard = () => {
         },
     ];
 
-    // All tabs for mobile
     const allTabs = [
         ...navTabs,
         {
@@ -166,6 +181,75 @@ const PatientDashboard = () => {
         Legal: ['Privacy Policy', 'Terms of Service', 'HIPAA Compliance'],
     };
 
+    const renderCalendar = () => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthName = currentMonth.toLocaleString('default', { month: 'long' });
+
+        const days = [];
+        for (let i = 0; i < firstDay; i++) days.push(null);
+        for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return (
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[340px] bg-white rounded-2xl shadow-2xl shadow-teal-900/10 border border-gray-100 p-6 transform origin-top-right transition-all">
+                <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-xl font-bold text-gray-900">{monthName} {year}</h3>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button type="button" onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-3 tracking-wide">
+                    {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map(d => <div key={d}>{d}</div>)}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                    {days.map((date, i) => {
+                        if (!date) return <div key={`empty-${i}`} className="h-10"></div>;
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${yyyy}-${mm}-${dd}`;
+
+                        const isPast = date < today;
+                        const isSelected = apptForm.date === dateStr;
+                        return (
+                            <button
+                                key={i}
+                                type="button"
+                                disabled={isPast}
+                                onClick={() => {
+                                    setApptForm({ ...apptForm, date: dateStr });
+                                    setShowDatePicker(false);
+                                }}
+                                className={`h-10 w-full rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-200 ${isSelected
+                                    ? 'bg-gradient-to-r from-teal-600 to-teal-500 text-white shadow-md shadow-teal-400/30 font-bold'
+                                    : isPast
+                                        ? 'text-gray-300 cursor-not-allowed opacity-50'
+                                        : 'text-gray-700 hover:bg-teal-50 hover:text-teal-700'
+                                    }`}
+                            >
+                                {date.getDate()}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
             <style>{`
@@ -177,6 +261,30 @@ const PatientDashboard = () => {
                 .card-lift:hover{transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(15,118,110,.15)}
                 .input-field{transition:border-color .3s ease,box-shadow .3s ease,background-color .2s ease}
                 .input-field:focus{border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.1)}
+                
+                /* ═══ DATE INPUT — move native picker indicator to the right ═══ */
+                .date-input-wrapper{position:relative}
+                .date-input-wrapper input[type="date"]{
+                    position:relative;
+                    padding-right:3rem;
+                }
+                /* Hide the default browser calendar icon */
+                .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator{
+                    position:absolute;
+                    right:0;
+                    top:0;
+                    width:3rem;
+                    height:100%;
+                    padding:0;
+                    margin:0;
+                    cursor:pointer;
+                    opacity:0;
+                    z-index:10;
+                }
+                /* Firefox: hide default icon */
+                .date-input-wrapper input[type="date"]::-moz-calendar-picker-indicator{
+                    opacity:0;
+                }
             `}</style>
 
             <ToastContainer position="top-right" autoClose={3000} />
@@ -184,7 +292,6 @@ const PatientDashboard = () => {
             {/* ════════════ NAVBAR ════════════ */}
             <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-gray-50/95 backdrop-blur-md shadow-lg shadow-gray-200/40 py-3' : 'bg-gray-50 py-4'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    {/* Logo */}
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-600 to-teal-400 flex items-center justify-center shadow-lg shadow-teal-400/15">
                             <svg className="w-6 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 28 24">
@@ -197,10 +304,8 @@ const PatientDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Right side nav items */}
                     <div className="flex items-center gap-3">
                         <div className="hidden lg:flex items-center gap-2">
-                            {/* Regular tabs */}
                             {navTabs.map((t) => (
                                 <button
                                     key={t.key}
@@ -217,7 +322,6 @@ const PatientDashboard = () => {
                                 </button>
                             ))}
 
-                            {/* Book Appointment — primary action button */}
                             <button
                                 onClick={() => setActiveTab('book')}
                                 className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === 'book'
@@ -236,7 +340,6 @@ const PatientDashboard = () => {
 
                         <div className="h-8 w-px bg-gray-200 hidden lg:block mx-1"></div>
 
-                        {/* Logout */}
                         <button
                             onClick={logout}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition-colors duration-200"
@@ -252,7 +355,6 @@ const PatientDashboard = () => {
 
             {/* ════════════ MAIN CONTENT ════════════ */}
             <div className="pt-28 pb-24 max-w-7xl mx-auto px-6 flex-1 w-full min-h-screen">
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Patient Dashboard</h1>
                     <p className="text-gray-500">View your health records, prescriptions and manage appointments</p>
@@ -310,7 +412,7 @@ const PatientDashboard = () => {
                     <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
                         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900">My Reports</h2>
+                                <h2 className="text-lg font-bold text-gray-900">Reports</h2>
                                 <p className="text-xs text-gray-400 mt-0.5">Lab results and medical reports</p>
                             </div>
                             <span className="text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{reports.length} reports</span>
@@ -517,17 +619,43 @@ const PatientDashboard = () => {
                                         ))}
                                     </select>
                                 </div>
+
+                                {/* Custom Popover Date Picker */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Appointment Date</label>
-                                    <input
-                                        type="date"
-                                        className="input-field w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none bg-gray-50/50 hover:bg-gray-50"
-                                        value={apptForm.date}
-                                        onChange={(e) => setApptForm({ ...apptForm, date: e.target.value })}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        required
-                                    />
+                                    <div className="relative" ref={datePickerRef}>
+                                        <div
+                                            onClick={() => setShowDatePicker(!showDatePicker)}
+                                            className={`w-full border rounded-xl px-4 py-3 pr-12 text-sm cursor-pointer transition-colors duration-200 ${showDatePicker
+                                                    ? 'border-teal-400 bg-teal-50/30 ring-4 ring-teal-500/10'
+                                                    : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <span className={apptForm.date ? 'text-gray-900 font-semibold' : 'text-gray-400'}>
+                                                {apptForm.date
+                                                    ? (() => {
+                                                        const [y, m, d] = apptForm.date.split('-');
+                                                        return `${d} - ${m} - ${y}`;
+                                                    })()
+                                                    : 'dd - mm - yyyy'}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDatePicker(!showDatePicker)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-teal-600 transition-colors duration-200"
+                                            tabIndex={-1}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                            </svg>
+                                        </button>
+
+                                        {showDatePicker && renderCalendar()}
+                                    </div>
                                 </div>
+
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Time Slot</label>
                                     <select
@@ -576,32 +704,36 @@ const PatientDashboard = () => {
                             </form>
                         </div>
 
-                        {/* Info Card */}
-                        <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-8 card-lift h-fit">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">
-                                    ℹ️
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Booking Information</h3>
-                                    <p className="text-sm text-gray-500">Things to know before your visit</p>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                {[
-                                    { icon: '🕐', title: 'Clinic Hours', desc: 'Mon – Fri: 9:00 AM – 5:00 PM' },
-                                    { icon: '📞', title: 'Need Help?', desc: 'Call us at +1 (800) 123-4567' },
-                                    { icon: '📍', title: 'Location', desc: 'Sahara Healthcare Center, Main Branch' },
-                                    { icon: '⚠️', title: 'Cancellation Policy', desc: 'Cancel at least 24 hours in advance' },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200">
-                                        <span className="text-xl mt-0.5">{item.icon}</span>
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-800">{item.title}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-                                        </div>
+                        {/* Right side wrapper */}
+                        <div className="space-y-8">
+
+                            {/* Info Card */}
+                            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-8 card-lift h-fit">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl">
+                                        ℹ️
                                     </div>
-                                ))}
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900">Booking Information</h3>
+                                        <p className="text-sm text-gray-500">Things to know before your visit</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    {[
+                                        { icon: '🕐', title: 'Clinic Hours', desc: 'Mon – Fri: 9:00 AM – 5:00 PM' },
+                                        { icon: '📞', title: 'Need Help?', desc: 'Call us at +1 (800) 123-4567' },
+                                        { icon: '📍', title: 'Location', desc: 'Sahara Healthcare Center, Main Branch' },
+                                        { icon: '⚠️', title: 'Cancellation Policy', desc: 'Cancel at least 24 hours in advance' },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200">
+                                            <span className="text-xl mt-0.5">{item.icon}</span>
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-800">{item.title}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
